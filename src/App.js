@@ -92,6 +92,12 @@ function App() {
 
   return (
     <div className="app">
+
+      {/* I want to have */}
+      {/* caption input */}
+      {/* file picker */}
+      {/* post button */}
+
       <Modal
         open={open}
         onClose={() => setOpen(false)}
