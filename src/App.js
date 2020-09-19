@@ -34,9 +34,11 @@ function App() {
 
   const [posts, setPosts] = useState( [] )
   const [open, setOpen] = useState(false)
+  const [openSignIn, setOpenSignIn] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [email, setEmail] = useState('')
+  const [user, setUser] = useState(null)
 
   // useEffect -> runs code based on a specific condition
 
@@ -51,10 +53,41 @@ function App() {
     })
   }, [])
 
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((authUser) => {
+      if (authUser) {
+        //user logged in
+        console.log(authUser)
+        setUser(authUser)
+      } else {
+        //user logged out
+        setUser(null)
+      }
+    })
+
+    return () => {
+      //perform clean up actions
+      unsubscribe()
+    }
+  }, [user, username])
+
   const signUp = (event) => {
     event.preventDefault()
     auth.createUserWithEmailAndPassword(email, password)
+    .then((authUser) => {
+      return authUser.user.updateProfile({
+        displayName: username
+      })
+    })
     .catch((error) => alert(error.message))
+    setOpen(false)
+  }
+
+  const signIn = (event) => {
+    event.preventDefault()
+    auth.signInWithEmailAndPassword(email, password)
+    .catch((error)=> alert(error.message))
+    setOpenSignIn(false)
   }
 
   return (
@@ -79,11 +112,34 @@ function App() {
             />
             <Input
               placeholder='password'
-              type='text'
+              type='password'
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
             <Button onClick={signUp}>SignUp</Button>
+          </form>
+        </div>
+      </Modal>
+
+      <Modal
+        open={openSignIn}
+        onClose={() => setOpenSignIn(false)}
+      >
+        <div style={modalStyle} className={classes.paper}>
+          <form className='app__signup'>
+            <Input
+              placeholder='email'
+              type='text'
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <Input
+              placeholder='password'
+              type='password'
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <Button onClick={signIn}>Sign In</Button>
           </form>
         </div>
       </Modal>
@@ -96,7 +152,15 @@ function App() {
         />
       </div>
 
-      <Button onClick={()=> setOpen(true)}>Sign Up</Button>
+      {user ? (
+          <Button onClick={()=> auth.signOut()}>Log Out</Button>
+        ) : (
+          <div className="app__loginContainer">
+            <Button onClick={()=> setOpenSignIn(true)}>Sign In</Button>
+            <Button onClick={()=> setOpen(true)}>Sign Up</Button>
+          </div>
+        )}
+      
       <h1>Welcome to the instagram clone</h1>
 
       {
@@ -104,8 +168,6 @@ function App() {
           <Post key={id} username={post.username} caption={post.caption} imageUrl={post.imageUrl}/>
         ))
       }
-      {/* post */}
-      {/* post */}
 
     </div>
   );
